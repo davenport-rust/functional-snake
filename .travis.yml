@@ -1,0 +1,21 @@
+language: rust
+rust:
+  - stable
+  - nightly
+os:
+  - linux
+  - osx
+
+# Using 16MB stacks for deep test/debug recursion
+env:
+  global:
+    - RUST_MIN_STACK=16777216
+
+cache: cargo
+before_script:
+  - export PATH="$PATH:$HOME/.cargo/bin"
+  - cargo install rustfmt || true
+script:
+  - cargo fmt -- --write-mode=diff
+  - cargo build
+  - cargo test
