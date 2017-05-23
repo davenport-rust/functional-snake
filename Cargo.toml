@@ -10,7 +10,6 @@ name = "functional-snake"
 piston_window = "0.66.0"
 find_folder = "0.3.0"
 rand = "0.3.15"
-glutin = "*"
 
 [dependencies.pistoncore-sdl2_window]
  git = "https://github.com/PistonDevelopers/sdl2_window"
