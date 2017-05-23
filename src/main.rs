@@ -4,7 +4,7 @@ extern crate find_folder;
 extern crate sdl2_window;
 
 use piston_window::*;
-// use rand::*;
+use rand::*;
 use sdl2_window::Sdl2Window;
 
 pub static GAME_NAME: &'static str = "Box Alive";
@@ -30,6 +30,12 @@ enum Direction {
     Down,
     Left,
     Right,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+struct Food {
+    x: u32,
+    y: u32,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
@@ -122,6 +128,37 @@ impl Player {
     }
 }
 
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
+struct Game {
+    active: bool,
+    game_window_settings: GameWindowSettings,
+    player: Player,
+    tail: Vec<(u32, u32)>,
+    food: Food,
+}
+
+impl Game {
+    pub fn new(gws: GameWindowSettings) -> Game {
+        let mut rng = rand::thread_rng();
+        Game {
+            active: true,
+            game_window_settings: gws,
+            player: Player {
+                x: gws.window_width / gws.block_size / 2 * gws.block_size,
+                y: gws.window_height / gws.block_size / 2 * gws.block_size,
+                direction: Direction::Right,
+            },
+            tail: Vec::new(),
+            food: Food {
+                x: rng.gen_range(0, gws.window_width),
+                y: rng.gen_range(0, gws.window_height),
+            },
+        }
+    }
+}
+
+
+
 
 fn main() {
     let game_window_settings: GameWindowSettings = GameWindowSettings {
@@ -175,7 +212,7 @@ fn main() {
                     &e, |c, g| {
                         let transform = c.transform.trans(10.0, 100.0);
 
-                        clear(WHITE, g);
+                        clear(BLACK, g);
 
                         let new_player_option = Player::advance(player, game_window_settings);
 
@@ -183,14 +220,14 @@ fn main() {
                             Some(new_player) => {
                                 player = new_player;
                                 rectangle(
-                                    BLACK,
+                                    WHITE,
                                     square,
                                     c.transform.trans(player.x as f64, player.y as f64),
                                     g,
                                 );
                             }
                             None => {
-                                text::Text::new_color(BLACK, 30).draw(
+                                text::Text::new_color(WHITE, 30).draw(
                                     &format!(
                                         "You Went Out of Bounds!",
                                     ),
