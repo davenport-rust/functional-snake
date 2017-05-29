@@ -9,33 +9,42 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn change_direction(player: Player, direction: Direction) -> Player {
+
+    pub fn new(game_window_settings: GameWindowSettings) -> Option<Player> {
+        Some(
+            Player {
+            x: game_window_settings.window_width /
+                game_window_settings.block_size /
+                2 *
+                game_window_settings.block_size,
+            y: game_window_settings.window_height /
+                game_window_settings.block_size /
+                2 *
+                game_window_settings.block_size,
+            direction: Direction::Right,
+        })
+    }
+
+    pub fn change_direction(player: Player, direction_opt: Option<Direction>) -> Player {
         use Direction::*;
-        if player.direction == direction {
-            player
-        } else {
-            match (player.direction, direction) {
-                (Right, Left) => player,
-                (Left, Right) => player,
-                (Up, Down) => player,
-                (Down, Up) => player,
-                _ => {
-                    Player {
-                        x: player.x,
-                        y: player.y,
-                        direction,
-                    }
-                }
-            }
+
+        let new_direction = direction_opt
+            .map(|direction| Direction::update_direction(player.direction, direction))
+            .unwrap_or(player.direction);
+
+        Player {
+            x: player.x,
+            y: player.y,
+            direction: new_direction,
         }
     }
 
     pub fn validate_position(player: Player, gw: GameWindowSettings) -> bool {
         if player.x > 0 && player.y > 0 && player.x <= gw.window_width - gw.block_size &&
             player.y <= gw.window_height - gw.block_size
-            {
-                true
-            } else {
+        {
+            true
+        } else {
             false
         }
     }
@@ -43,14 +52,14 @@ impl Player {
     pub fn advance(player: Option<Player>, gw: GameWindowSettings) -> Option<Player> {
         match player {
             Some(p) => {
-                let new_player = Player::update_position(p, gw);
-                if Player::validate_position(new_player, gw) {
+                if Player::validate_position(p, gw) {
+                    let new_player = Player::update_position(p, gw);
                     Some(new_player)
                 } else {
                     None
                 }
             }
-            None => None
+            None => None,
         }
     }
 

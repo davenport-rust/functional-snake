@@ -6,6 +6,7 @@ mod game;
 mod direction;
 mod player;
 mod gamewindowsettings;
+
 mod food;
 
 use piston_window::*;
@@ -16,11 +17,11 @@ use player::*;
 use direction::*;
 use gamewindowsettings::*;
 
-
 pub static GAME_NAME: &'static str = "Box Alive";
 pub static WINDOW_HEIGHT: u32 = 480;
 pub static WINDOW_WIDTH: u32 = 640;
-pub static BLOCK_SIZE: u32 = 10; // NOTE: WINDOW_HEIGHT and WINDOW_WIDTH should be divisible by this
+pub static BLOCK_SIZE: u32 = 10;
+// NOTE: WINDOW_HEIGHT and WINDOW_WIDTH should be divisible by BLOCK_SIZE
 
 pub static GREEN: [f32; 4] = [0.0, 1.0, 0.0, 1.0];
 pub static RED: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
@@ -29,74 +30,97 @@ pub static WHITE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
 fn main() {
 
-    let mut game_window_settings = GameWindowSettings {
+    let game_window_settings = GameWindowSettings {
         window_height: WINDOW_HEIGHT,
         window_width: WINDOW_WIDTH,
         block_size: BLOCK_SIZE,
     };
 
-    let mut game_window =
-        GameWindow::new_window(game_window_settings.clone(), GAME_NAME.to_string())
-            .unwrap();
+    let mut game_window: PistonWindow<Sdl2Window> =
+        new_game_window(game_window_settings.clone(), GAME_NAME.to_string()).unwrap();
 
-    let mut glyphs =
-        GameWindow::new_glyphs(&mut game_window)
-        .unwrap();
+    let mut glyphs = new_glyphs(&mut game_window).unwrap();
 
-    let square = rectangle::square(0.0, 0.0, BLOCK_SIZE as f64);
-    let mut player : Option<Player> = Some(Player {
-        x: WINDOW_WIDTH / BLOCK_SIZE / 2 * BLOCK_SIZE,
-        y: WINDOW_HEIGHT / BLOCK_SIZE / 2 * BLOCK_SIZE,
-        direction: Direction::Right,
-    });
+    let mut player: Option<Player> = Player::new(game_window_settings);
 
-
-    while let Some(e) = game_window.next() {
-        match e {
+    while let Some(input) = game_window.next() {
+        match input {
             Input::Release(Button::Keyboard(key)) => {
-                player = player.and_then(|p|
-                    Direction::from_key(key)
-                        .map(|dir| Player::change_direction(p, dir))
-                )
+                match key {
+                    Key::R => player = Player::new(game_window_settings),
+                    _ => player = player.map(
+                        |p| {
+                            Player::change_direction(p, Direction::from_key(key))
+                        }
+                    ),
+                }
 
             }
             Input::Render(_) => {
-                game_window.draw_2d(
-                    &e, |c, g| {
-                        clear(BLACK, g);
-
-                        let new_player_option = Player::advance(player, game_window_settings);
-
-                        match new_player_option {
-                            Some(new_player) => {
-                                player = Some(new_player);
+                let new_player_option = Player::advance(player, game_window_settings);
+                match new_player_option {
+                    Some(new_player) => {
+                        player = Some(new_player);
+                        game_window.draw_2d(
+                            &input, |context, graphics| {
+                                clear(BLACK, graphics);
                                 rectangle(
                                     WHITE,
-                                    square,
-                                    c.transform.trans(new_player.x as f64, new_player.y as f64),
-                                    g,
+                                    rectangle::square(
+                                        0.0,
+                                        0.0,
+                                        game_window_settings.block_size as f64,
+                                    ),
+                                    context
+                                        .transform
+                                        .trans(new_player.x as f64, new_player.y as f64),
+                                    graphics,
                                 );
                             }
-                            None => {
+                        );
+                        ()
+                    }
+                    None => {
+                        game_window.draw_2d(
+                            &input, |context, graphics| {
+                                clear(BLACK, graphics);
                                 text::Text::new_color(WHITE, 30).draw(
                                     &format!(
-                                        "You Went Out of Bounds!",
-                                    ),
+                                    "You Went Out of Bounds!",
+                                ),
                                     &mut glyphs,
-                                    &c.draw_state,
-                                    c.transform
+                                    &context.draw_state,
+                                    context
+                                        .transform
                                         .trans(
                                             game_window_settings.window_width as f64 /
                                                 4.0 as f64,
                                             game_window_settings.window_height as f64 /
                                                 2.0 as f64,
                                         ),
-                                    g,
+                                    graphics,
                                 );
+                                text::Text::new_color(WHITE, 16).draw(
+                                    &format!(
+                                        "Press R to Restart",
+                                    ),
+                                    &mut glyphs,
+                                    &context.draw_state,
+                                    context
+                                        .transform
+                                        .trans(
+                                            game_window_settings.window_width as f64 /
+                                                4.0 as f64,
+                                            game_window_settings.window_height as f64 /
+                                                4.0 * 3.0 as f64,
+                                        ),
+                                    graphics,
+                                )
                             }
-                        }
+                        );
+                        ()
                     }
-                );
+                }
             }
             _ => {}
         }
