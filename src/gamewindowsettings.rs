@@ -19,14 +19,20 @@ pub fn new_game_window(
     game_name: String,
 ) -> Option<PistonWindow<Sdl2Window>> {
     let opengl = OpenGL::V3_2;
-    WindowSettings::new(
+    let ws: Option<PistonWindow<Sdl2Window>> = WindowSettings::new(
         game_name,
         (gws.window_width.clone(), gws.window_height.clone()),
     )
             .opengl(opengl)
             .exit_on_esc(true)
             .build()
-            .ok()
+            .ok();
+
+//    ws.map(|mut ws| {
+//        ws.set_lazy(true);
+//        ws
+//    })
+    ws
 }
 
 pub fn new_glyphs(window: &mut PistonWindow<Sdl2Window>) -> Option<Glyphs> {

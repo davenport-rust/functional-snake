@@ -10,12 +10,11 @@ mod gamewindowsettings;
 mod food;
 
 use piston_window::*;
-use rand::*;
 use sdl2_window::Sdl2Window;
 
-use player::*;
 use direction::*;
 use gamewindowsettings::*;
+use game::*;
 
 pub static GAME_NAME: &'static str = "Box Alive";
 pub static WINDOW_HEIGHT: u32 = 480;
@@ -41,60 +40,121 @@ fn main() {
 
     let mut glyphs = new_glyphs(&mut game_window).unwrap();
 
-    let mut player: Option<Player> = Player::new(game_window_settings);
+    let mut game_status = Game::new(game_window_settings);
 
     while let Some(input) = game_window.next() {
-        match input {
-            Input::Release(Button::Keyboard(key)) => {
-                match key {
-                    Key::R => player = Player::new(game_window_settings),
-                    _ => player = player.map(
-                        |p| {
-                            Player::change_direction(p, Direction::from_key(key))
-                        }
-                    ),
-                }
+        match game_status.stage {
 
-            }
-            Input::Render(_) => {
-                let new_player_option = Player::advance(player, game_window_settings);
-                match new_player_option {
-                    Some(new_player) => {
-                        player = Some(new_player);
-                        game_window.draw_2d(
-                            &input, |context, graphics| {
-                                clear(BLACK, graphics);
-                                rectangle(
-                                    WHITE,
-                                    rectangle::square(
-                                        0.0,
-                                        0.0,
-                                        game_window_settings.block_size as f64,
-                                    ),
-                                    context
-                                        .transform
-                                        .trans(new_player.x as f64, new_player.y as f64),
-                                    graphics,
-                                );
-                            }
-                        );
-                        ()
-                    }
-                    None => {
+            GameStage::New => {
+                match input {
+                    Input::Release(Button::Keyboard(key)) => {
+                        match key {
+                            Key::N => game_status = game_status.activate(),
+                            _ => (),
+                        }
+                    },
+                    Input::Render(_) => {
                         game_window.draw_2d(
                             &input, |context, graphics| {
                                 clear(BLACK, graphics);
                                 text::Text::new_color(WHITE, 30).draw(
                                     &format!(
-                                    "You Went Out of Bounds!",
-                                ),
+                                        "Functional Snake",
+                                    ),
                                     &mut glyphs,
                                     &context.draw_state,
                                     context
                                         .transform
                                         .trans(
                                             game_window_settings.window_width as f64 /
-                                                4.0 as f64,
+                                                3.0 as f64,
+                                            game_window_settings.window_height as f64 /
+                                                2.0 as f64,
+                                        ),
+                                    graphics,
+                                );
+                                text::Text::new_color(WHITE, 16).draw(
+                                    &format!(
+                                        "Press N to Start",
+                                    ),
+                                    &mut glyphs,
+                                    &context.draw_state,
+                                    context
+                                        .transform
+                                        .trans(
+                                            game_window_settings.window_width as f64 /
+                                                2.5 as f64,
+                                            game_window_settings.window_height as f64 /
+                                                4.0 * 3.0 as f64,
+                                        ),
+                                    graphics,
+                                )
+                            }
+                        );
+                        ()
+                    },
+                    _ => ()
+                }
+            },
+
+            GameStage::Active => {
+                match input {
+                    Input::Release(Button::Keyboard(key)) => {
+                        game_status = game_status.change_player_direction(Direction::from_key(key))
+                    },
+                    Input::Render(_) => {
+                        game_status = game_status.increment();
+                        game_window.draw_2d(
+                            &input, |context, graphics| {
+                                // Clear Screen
+                                clear(BLACK, graphics);
+                                // Player Head
+                                rectangle(
+                                    WHITE,
+                                    rectangle::square(
+                                        0.0,
+                                        0.0,
+                                        game_status.game_window_settings.block_size as f64,
+                                    ),
+                                    context
+                                        .transform
+                                        .trans(game_status.player.x as f64, game_status.player.y as f64),
+                                    graphics,
+                                );
+
+                                // Food
+
+                            }
+                        );
+                        ()
+                    }
+                    _ => ()
+                }
+            },
+
+            GameStage::GameOver => {
+                match input {
+                    Input::Release(Button::Keyboard(key)) => {
+                        match key {
+                            Key::R => game_status = Game::new(game_window_settings).activate(),
+                            _ => (),
+                        }
+                    }
+                    Input::Render(_) => {
+                        game_window.draw_2d(
+                            &input, |context, graphics| {
+                                clear(BLACK, graphics);
+                                text::Text::new_color(WHITE, 30).draw(
+                                    &format!(
+                                        "Game Over"
+                                    ),
+                                    &mut glyphs,
+                                    &context.draw_state,
+                                    context
+                                        .transform
+                                        .trans(
+                                            game_window_settings.window_width as f64 /
+                                                2.6 as f64,
                                             game_window_settings.window_height as f64 /
                                                 2.0 as f64,
                                         ),
@@ -110,7 +170,7 @@ fn main() {
                                         .transform
                                         .trans(
                                             game_window_settings.window_width as f64 /
-                                                4.0 as f64,
+                                                2.5 as f64,
                                             game_window_settings.window_height as f64 /
                                                 4.0 * 3.0 as f64,
                                         ),
@@ -120,10 +180,62 @@ fn main() {
                         );
                         ()
                     }
+                    _ => ()
                 }
+
             }
-            _ => {}
         }
+
+//        match input {
+////            Input::Release(Button::Keyboard(key)) => {
+////                match key {
+////                    Key::R => player = Player::new(game_window_settings),
+////                    _ => player = player.map(
+////                        |p| {
+////                            Player::change_direction(p, Direction::from_key(key))
+////                        }
+////                    ),
+////                }
+////
+////            }
+//            Input::Render(_) => {
+//                let new_player_option = Player::advance(player, game_window_settings);
+//                match new_player_option {
+//                    Some(new_player) => {
+//
+//                        player = Some(new_player);
+//                        game_window.draw_2d(
+//                            &input, |context, graphics| {
+//                                clear(BLACK, graphics);
+//
+//                                // Player Head
+//                                rectangle(
+//                                    WHITE,
+//                                    rectangle::square(
+//                                        0.0,
+//                                        0.0,
+//                                        game_window_settings.block_size as f64,
+//                                    ),
+//                                    context
+//                                        .transform
+//                                        .trans(new_player.x as f64, new_player.y as f64),
+//                                    graphics,
+//                                );
+//
+//                                // Food
+//
+//                            }
+//                        );
+//                        ()
+//                    }
+//                    None => {
+//                        ;
+//                        ()
+//                    }
+//                }
+//            }
+//            _ => {}
+//        }
 
     }
 }

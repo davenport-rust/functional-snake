@@ -1,18 +1,38 @@
 extern crate rand;
-extern crate piston_window;
-extern crate sdl2_window;
 use rand::*;
-use piston_window::*;
-use sdl2_window::Sdl2Window;
 
 use player::*;
 use direction::*;
 use gamewindowsettings::*;
 use food::*;
 
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
+pub enum GameStage{
+    New,
+    Active,
+    GameOver,
+}
+
+pub enum GameOverState{
+    AteTail,
+    OutOfBounds,
+    Win
+}
+
+impl GameOverState {
+    fn announce(self) -> String {
+        match self {
+            GameOverState::AteTail => "You Ate Your Tail!".to_string(),
+            GameOverState::OutOfBounds => "You Went out of Bounds!".to_string(),
+            GameOverState::Win => "You Win!".to_string(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Game {
-    pub active: bool,
+    pub stage: GameStage,
     pub game_window_settings: GameWindowSettings,
     pub player: Player,
     pub tail: Vec<(u32, u32)>,
@@ -23,18 +43,56 @@ impl Game {
     pub fn new(gws: GameWindowSettings) -> Game {
         let mut rng = rand::thread_rng();
         Game {
-            active: true,
+            stage: GameStage::New,
             game_window_settings: gws,
-            player: Player {
-                x: gws.window_width / gws.block_size / 2 * gws.block_size,
-                y: gws.window_height / gws.block_size / 2 * gws.block_size,
-                direction: Direction::Right,
-            },
+            player: Player::new(gws),
             tail: Vec::new(),
             food: Food {
                 x: rng.gen_range(0, gws.window_width),
                 y: rng.gen_range(0, gws.window_height),
             },
         }
+    }
+
+    pub fn activate(self) -> Game {
+        Game {
+            stage: GameStage::Active,
+            game_window_settings: self.game_window_settings,
+            player: self.player,
+            tail: self.tail,
+            food: self.food,
+        }
+    }
+
+    pub fn increment(self) -> Game {
+        let new_player_opt = Player::advance(self.player, self.game_window_settings);
+        match new_player_opt {
+            Some(new_player) => Game{
+                stage: self.stage,
+                game_window_settings: self.game_window_settings,
+                player: new_player,
+                tail: self.tail,
+                food: self.food,
+            },
+            None => Game{
+                stage: GameStage::GameOver,
+                game_window_settings: self.game_window_settings,
+                player: self.player,
+                tail: self.tail,
+                food: self.food
+            }
+        }
+    }
+
+    pub fn change_player_direction(self, direction: Option<Direction>) -> Game {
+        let new_player = Player::change_direction(self.player, direction);
+        Game{
+            stage: self.stage,
+            game_window_settings: self.game_window_settings,
+            player: new_player,
+            tail: self.tail,
+            food: self.food,
+        }
+
     }
 }

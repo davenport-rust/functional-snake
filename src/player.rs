@@ -10,8 +10,7 @@ pub struct Player {
 
 impl Player {
 
-    pub fn new(game_window_settings: GameWindowSettings) -> Option<Player> {
-        Some(
+    pub fn new(game_window_settings: GameWindowSettings) -> Player {
             Player {
             x: game_window_settings.window_width /
                 game_window_settings.block_size /
@@ -22,7 +21,7 @@ impl Player {
                 2 *
                 game_window_settings.block_size,
             direction: Direction::Right,
-        })
+        }
     }
 
     pub fn change_direction(player: Player, direction_opt: Option<Direction>) -> Player {
@@ -49,18 +48,14 @@ impl Player {
         }
     }
 
-    pub fn advance(player: Option<Player>, gw: GameWindowSettings) -> Option<Player> {
-        match player {
-            Some(p) => {
-                if Player::validate_position(p, gw) {
-                    let new_player = Player::update_position(p, gw);
-                    Some(new_player)
-                } else {
-                    None
-                }
-            }
-            None => None,
+    pub fn advance(player: Player, gw: GameWindowSettings) -> Option<Player> {
+        if Player::validate_position(player, gw) {
+            let new_player = Player::update_position(player, gw);
+            Some(new_player)
+        } else {
+            None
         }
+
     }
 
     pub fn update_position(player: Player, gw: GameWindowSettings) -> Player {
