@@ -21,17 +21,18 @@ pub fn new_game_window(
     let opengl = OpenGL::V3_2;
     let ws: Option<PistonWindow<Sdl2Window>> = WindowSettings::new(
         game_name,
-        (gws.window_width.clone(), gws.window_height.clone()),
+        (gws.window_width.clone(),
+         gws.window_height.clone()),
     )
             .opengl(opengl)
             .exit_on_esc(true)
             .build()
             .ok();
 
-//    ws.map(|mut ws| {
-//        ws.set_lazy(true);
-//        ws
-//    })
+    //    ws.map(|mut ws| {
+    //        ws.set_lazy(true);
+    //        ws
+    //    })
     ws
 }
 

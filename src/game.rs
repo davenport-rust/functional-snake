@@ -8,16 +8,16 @@ use food::*;
 
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
-pub enum GameStage{
+pub enum GameStage {
     New,
     Active,
     GameOver,
 }
 
-pub enum GameOverState{
+pub enum GameOverState {
     AteTail,
     OutOfBounds,
-    Win
+    Win,
 }
 
 impl GameOverState {
@@ -67,26 +67,30 @@ impl Game {
     pub fn increment(self) -> Game {
         let new_player_opt = Player::advance(self.player, self.game_window_settings);
         match new_player_opt {
-            Some(new_player) => Game{
-                stage: self.stage,
-                game_window_settings: self.game_window_settings,
-                player: new_player,
-                tail: self.tail,
-                food: self.food,
-            },
-            None => Game{
-                stage: GameStage::GameOver,
-                game_window_settings: self.game_window_settings,
-                player: self.player,
-                tail: self.tail,
-                food: self.food
+            Some(new_player) => {
+                Game {
+                    stage: self.stage,
+                    game_window_settings: self.game_window_settings,
+                    player: new_player,
+                    tail: self.tail,
+                    food: self.food,
+                }
+            }
+            None => {
+                Game {
+                    stage: GameStage::GameOver,
+                    game_window_settings: self.game_window_settings,
+                    player: self.player,
+                    tail: self.tail,
+                    food: self.food,
+                }
             }
         }
     }
 
     pub fn change_player_direction(self, direction: Option<Direction>) -> Game {
         let new_player = Player::change_direction(self.player, direction);
-        Game{
+        Game {
             stage: self.stage,
             game_window_settings: self.game_window_settings,
             player: new_player,

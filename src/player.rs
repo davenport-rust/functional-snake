@@ -9,16 +9,11 @@ pub struct Player {
 }
 
 impl Player {
-
     pub fn new(game_window_settings: GameWindowSettings) -> Player {
-            Player {
-            x: game_window_settings.window_width /
-                game_window_settings.block_size /
-                2 *
+        Player {
+            x: game_window_settings.window_width / game_window_settings.block_size / 2 *
                 game_window_settings.block_size,
-            y: game_window_settings.window_height /
-                game_window_settings.block_size /
-                2 *
+            y: game_window_settings.window_height / game_window_settings.block_size / 2 *
                 game_window_settings.block_size,
             direction: Direction::Right,
         }
